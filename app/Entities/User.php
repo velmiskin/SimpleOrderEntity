@@ -9,10 +9,10 @@ use Ramsey\Uuid\UuidInterface;
 class User extends BaseEntity
 {
 
-    protected function __construct(private string $name,
-                                   private string $phone,
-                                   private string $email,
-                                   UuidInterface $id)
+    public function __construct(private string $name,
+                                private string $phone,
+                                private string $email,
+                                UuidInterface $id)
     {
         parent::__construct($id);
     }
