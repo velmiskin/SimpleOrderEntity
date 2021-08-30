@@ -59,14 +59,6 @@ class Order extends BaseEntity
     }
 
     /**
-     * @return float
-     */
-    public function getAmount(): float
-    {
-        return $this->amount;
-    }
-
-    /**
      * @return Collection
      */
     public function getStatuses(): Collection
@@ -75,9 +67,9 @@ class Order extends BaseEntity
     }
 
     /**
-     * @return Collection
+     * @return OrderStatus
      */
-    public function getLastStatus(): OrderStatus
+    public function getLastStatus(): object
     {
         return $this->statuses->last();
     }
@@ -135,7 +127,8 @@ class Order extends BaseEntity
         })->count()) {
             throw new InvalidOrderException('Product duplicate in order item list');
         }
-            return $this->items->add($newItem);
+
+        return $this->items->add($newItem);
     }
 
     public function addOrderStatuses(Collection $orderStatuses): void
@@ -145,13 +138,15 @@ class Order extends BaseEntity
         });
     }
 
-    public function addOrderStatus(OrderStatus $orderStatus) : Collection | InvalidOrderException
+    public function addOrderStatus($orderStatus) : Collection | InvalidOrderException
     {
-        if ($this->statuses->WhereInstanceOf(get_class($orderStatus))) {
+        if ($this->statuses->filter(function ($status) use ($orderStatus) {
+            return get_class($status) == get_class($orderStatus);
+        })->count()) {
             throw new InvalidOrderException('Status duplicate in order status list');
-        } else {
-            return $this->items->add($orderStatus);
         }
+
+        return $this->statuses->add($orderStatus);
     }
 
 
