@@ -7,42 +7,17 @@ use App\Entities\DeliveryMethod;
 use App\Entities\Order;
 use App\Entities\OrderItem;
 use App\Entities\OrderStatus\CreatedOrderStatus;
+use App\Entities\OrderStatus\WaitPaymentOrderStatus;
 use App\Entities\PaymentMethod;
 use App\Entities\Product;
-use App\Entities\User;
 use App\Exceptions\InvalidOrderException;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
+use Tests\Traits\MockCreationTrait;
 
 class OrderTest extends TestCase
 {
-
-    private function createProductMock() : Product
-    {
-        return new Product('product_'.rand(0,100), 100, 1, 100, 100, 100,
-            Uuid::uuid4());
-    }
-
-    private function createOrderItemMock() : OrderItem
-    {
-        return new OrderItem($this->createProductMock(), 3, Uuid::uuid4());
-    }
-
-    /**
-     * @return OrderDTO
-     */
-    private function createOrderDtoMock(): OrderDTO
-    {
-        $orderDTO = new OrderDTO();
-        $orderDTO->id = Uuid::uuid4();
-        $orderDTO->deliveryMethod = new DeliveryMethod(2);
-        $orderDTO->paymentMethod = new PaymentMethod(2);
-        $orderDTO->user = $this->createMock(User::class);
-        $orderDTO->items = collect([$this->createOrderItemMock()]);
-        $orderDTO->statuses = collect([new CreatedOrderStatus(Uuid::uuid4(), now())]);
-
-        return $orderDTO;
-    }
+    use MockCreationTrait;
 
     public function testCreateOrder()
     {
@@ -67,10 +42,8 @@ class OrderTest extends TestCase
 
     public function testNewOrderCanAddItem()
     {
-        $orderDTO = $this->createOrderDtoMock();
-        $product = $this->createProductMock();
-        $orderItem = new OrderItem($product, 3, Uuid::uuid4());
-        $order = new Order($orderDTO);
+        $orderItem = new OrderItem($this->createProductMock(), 3, Uuid::uuid4());
+        $order = new Order($this->createOrderDtoMock());
         $order->addOrderItem($orderItem);
         $this->assertEquals($order->getItems()->last(), $orderItem);
     }
@@ -84,4 +57,12 @@ class OrderTest extends TestCase
         $order = new Order($orderDTO);
         $order->addOrderItem($orderItem);
     }
+
+    public function testOrderAddWaitPaymentStatus()
+    {
+        $order = new Order($this->createOrderDtoMock());
+        $order->addOrderStatus(new WaitPaymentOrderStatus());
+        $this->assertInstanceOf(WaitPaymentOrderStatus::class, $order->getLastStatus());
+    }
+
 }
